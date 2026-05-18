@@ -72,26 +72,45 @@ GRANT EXECUTE ON FUNCTION update_admin_password(text, text) TO anon, authenticat
 
 ALTER TABLE app_state ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Public read app_state" ON app_state;
-CREATE POLICY "Public read app_state"
-  ON app_state FOR SELECT
-  TO anon, authenticated
-  USING (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'app_state' AND policyname = 'Public read app_state'
+  ) THEN
+    CREATE POLICY "Public read app_state"
+      ON app_state FOR SELECT
+      TO anon, authenticated
+      USING (true);
+  END IF;
 
-DROP POLICY IF EXISTS "Block anon insert app_state" ON app_state;
-CREATE POLICY "Block anon insert app_state"
-  ON app_state FOR INSERT
-  TO anon
-  WITH CHECK (false);
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'app_state' AND policyname = 'Block anon insert app_state'
+  ) THEN
+    CREATE POLICY "Block anon insert app_state"
+      ON app_state FOR INSERT
+      TO anon
+      WITH CHECK (false);
+  END IF;
 
-DROP POLICY IF EXISTS "Block anon update app_state" ON app_state;
-CREATE POLICY "Block anon update app_state"
-  ON app_state FOR UPDATE
-  TO anon
-  USING (false);
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'app_state' AND policyname = 'Block anon update app_state'
+  ) THEN
+    CREATE POLICY "Block anon update app_state"
+      ON app_state FOR UPDATE
+      TO anon
+      USING (false);
+  END IF;
 
-DROP POLICY IF EXISTS "Block anon delete app_state" ON app_state;
-CREATE POLICY "Block anon delete app_state"
-  ON app_state FOR DELETE
-  TO anon
-  USING (false);
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'app_state' AND policyname = 'Block anon delete app_state'
+  ) THEN
+    CREATE POLICY "Block anon delete app_state"
+      ON app_state FOR DELETE
+      TO anon
+      USING (false);
+  END IF;
+END $$;
