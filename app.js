@@ -1,9 +1,9 @@
 const STORAGE_KEY = "triade-registre-hebdo-v2";
 const WEEKLY_TARGET_PER_MEMBER = 70000;
-const ADMIN_CODE = "triade70";
-const ASSET_VERSION = "20260507d";
-const SUPABASE_URL = "https://oyziimykfzcvwyxqxmqv.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95emlpbXlrZnpjdnd5eHF4bXF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNjIwNzAsImV4cCI6MjA5MzczODA3MH0.mMib8J4_ldjX5EfVxlyAlNR_Z3ne9yintGCb0lUqMU4";
+const ASSET_VERSION = "20260507h";
+const cfg = window.TRIADE_CONFIG || {};
+const SUPABASE_URL = String(cfg.supabaseUrl || "").trim();
+const SUPABASE_ANON_KEY = String(cfg.supabaseAnonKey || "").trim();
 const SUPABASE_STATE_ID = "global";
 
 const membreForm = document.getElementById("membreForm");
@@ -45,6 +45,8 @@ let state = {
 };
 
 let isAdmin = false;
+/** @type {string} Mot de passe admin en mémoire uniquement (jamais stocké ni versionné). */
+let adminPassword = "";
 let activeTab = "cotiz-famille";
 let saveTimer = null;
 let cloudSaveInFlight = false;
@@ -143,15 +145,30 @@ async function fetchCloudState() {
 }
 
 function queueCloudSave() {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !isAdmin || !adminPassword) return;
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     pushCloudState();
   }, 250);
 }
 
+async function verifyAdminPassword(password) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !password) return false;
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/verify_admin`, {
+      method: "POST",
+      headers: supabaseHeaders(),
+      body: JSON.stringify({ p_password: password }),
+    });
+    if (!response.ok) return false;
+    return (await response.json()) === true;
+  } catch {
+    return false;
+  }
+}
+
 async function pushCloudState() {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !isAdmin || !adminPassword) return;
   if (cloudSaveInFlight) {
     cloudSaveQueued = true;
     return;
@@ -159,20 +176,17 @@ async function pushCloudState() {
   cloudSaveInFlight = true;
   const snapshot = JSON.stringify(state);
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/app_state?on_conflict=id`, {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/save_app_state`, {
       method: "POST",
-      headers: supabaseHeaders({
-        Prefer: "resolution=merge-duplicates,return=minimal",
+      headers: supabaseHeaders(),
+      body: JSON.stringify({
+        p_state: state,
+        p_password: adminPassword,
       }),
-      body: JSON.stringify([
-        {
-          id: SUPABASE_STATE_ID,
-          state,
-          updated_at: new Date().toISOString(),
-        },
-      ]),
     });
-    lastSyncedSnapshot = snapshot;
+    if (response.ok) {
+      lastSyncedSnapshot = snapshot;
+    }
   } catch {
     // Ignore transient cloud sync failures; local state stays usable.
   } finally {
@@ -584,20 +598,31 @@ cotisationForm.addEventListener("submit", (event) => {
   refreshAll();
 });
 
-adminForm.addEventListener("submit", (event) => {
+adminForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const code = String(new FormData(adminForm).get("adminCode") || "");
-  if (code.trim() !== ADMIN_CODE) {
+  const code = String(new FormData(adminForm).get("adminCode") || "").trim();
+  if (!code) return;
+
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    alert("Configuration Supabase manquante (config.js).");
+    return;
+  }
+
+  const ok = await verifyAdminPassword(code);
+  if (!ok) {
     alert("Code admin incorrect.");
     return;
   }
+
   isAdmin = true;
+  adminPassword = code;
   adminForm.reset();
   refreshAll();
 });
 
 adminOffBtn.addEventListener("click", () => {
   isAdmin = false;
+  adminPassword = "";
   refreshAll();
 });
 
@@ -646,7 +671,15 @@ membreTableBody.addEventListener("click", (event) => {
   refreshAll();
 });
 
+function assertConfigReady() {
+  if (SUPABASE_URL && SUPABASE_ANON_KEY) return;
+  console.warn(
+    "TRIADE_CONFIG manquant : copie config.example.js vers config.js ou configure les secrets GitHub Actions."
+  );
+}
+
 async function initApp() {
+  assertConfigReady();
   await load();
   loadLogoWithFallbacks();
   refreshAll();
