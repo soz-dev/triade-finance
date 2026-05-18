@@ -1,19 +1,12 @@
--- À exécuter dans Supabase : SQL Editor
--- Sécurise app_state (lecture publique, écriture admin uniquement)
+-- Correctif : colle ce script dans Supabase SQL Editor puis Run
+-- Ne supprime aucune donnée, corrige uniquement la vérification du mot de passe
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-CREATE TABLE IF NOT EXISTS admin_config (
-  id int PRIMARY KEY DEFAULT 1 CHECK (id = 1),
-  password_hash text NOT NULL
-);
-
-ALTER TABLE admin_config ENABLE ROW LEVEL SECURITY;
-
--- Hash SHA-256 du mot de passe initial (change-le ensuite via update_admin_password)
 INSERT INTO admin_config (id, password_hash)
 VALUES (1, encode(digest('triade70'::text, 'sha256'::text), 'hex'))
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE
+SET password_hash = EXCLUDED.password_hash;
 
 CREATE OR REPLACE FUNCTION verify_admin(p_password text)
 RETURNS boolean
@@ -69,48 +62,3 @@ $$;
 GRANT EXECUTE ON FUNCTION verify_admin(text) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION save_app_state(jsonb, text) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION update_admin_password(text, text) TO anon, authenticated;
-
-ALTER TABLE app_state ENABLE ROW LEVEL SECURITY;
-
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE schemaname = 'public' AND tablename = 'app_state' AND policyname = 'Public read app_state'
-  ) THEN
-    CREATE POLICY "Public read app_state"
-      ON app_state FOR SELECT
-      TO anon, authenticated
-      USING (true);
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE schemaname = 'public' AND tablename = 'app_state' AND policyname = 'Block anon insert app_state'
-  ) THEN
-    CREATE POLICY "Block anon insert app_state"
-      ON app_state FOR INSERT
-      TO anon
-      WITH CHECK (false);
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE schemaname = 'public' AND tablename = 'app_state' AND policyname = 'Block anon update app_state'
-  ) THEN
-    CREATE POLICY "Block anon update app_state"
-      ON app_state FOR UPDATE
-      TO anon
-      USING (false);
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE schemaname = 'public' AND tablename = 'app_state' AND policyname = 'Block anon delete app_state'
-  ) THEN
-    CREATE POLICY "Block anon delete app_state"
-      ON app_state FOR DELETE
-      TO anon
-      USING (false);
-  END IF;
-END $$;
