@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260519c" />
+    <link rel="stylesheet" href="./styles.css?v=20260519d" />
   </head>
   <body>
     <main class="container">
@@ -149,18 +149,19 @@
           <div class="table-header">
             <h2>Membres — <span id="weekLabel"></span></h2>
           </div>
-          <div class="table-wrap">
-            <table>
+          <p class="table-scroll-hint">Faire défiler horizontalement →</p>
+          <div class="table-wrap table-wrap--members">
+            <table class="table--members">
               <thead>
                 <tr>
-                  <th>Nom</th>
-                  <th>Prénom</th>
-                  <th>Pseudo</th>
-                  <th>VIP</th>
-                  <th>Payé</th>
-                  <th>Reste</th>
-                  <th>Statut</th>
-                  <th>Bonus</th>
+                  <th><button type="button" class="sort-btn" data-sort="nom">Nom <span class="sort-icon"></span></button></th>
+                  <th><button type="button" class="sort-btn" data-sort="prenom">Prénom <span class="sort-icon"></span></button></th>
+                  <th><button type="button" class="sort-btn sort-active" data-sort="pseudo" aria-sort="ascending">Pseudo <span class="sort-icon">↑</span></button></th>
+                  <th><button type="button" class="sort-btn" data-sort="vip">VIP <span class="sort-icon"></span></button></th>
+                  <th><button type="button" class="sort-btn" data-sort="paye">Payé <span class="sort-icon"></span></button></th>
+                  <th><button type="button" class="sort-btn" data-sort="reste">Reste <span class="sort-icon"></span></button></th>
+                  <th><button type="button" class="sort-btn" data-sort="statut">Statut <span class="sort-icon"></span></button></th>
+                  <th><button type="button" class="sort-btn" data-sort="bonus">Bonus <span class="sort-icon"></span></button></th>
                   <th class="hidden-admin">Actions</th>
                 </tr>
               </thead>
@@ -226,6 +227,6 @@
     </main>
 
     <script src="./config.js"></script>
-    <script src="./app.js?v=20260519c"></script>
+    <script src="./app.js?v=20260519d"></script>
   </body>
 </html>

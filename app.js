@@ -1,6 +1,6 @@
 const STORAGE_KEY = "triade-registre-hebdo-v2";
 const WEEKLY_TARGET_PER_MEMBER = 70000;
-const ASSET_VERSION = "20260519c";
+const ASSET_VERSION = "20260519d";
 const cfg = window.TRIADE_CONFIG || {};
 const SUPABASE_URL = String(cfg.supabaseUrl || "").trim();
 const SUPABASE_ANON_KEY = String(cfg.supabaseAnonKey || "").trim();
@@ -52,6 +52,16 @@ let saveTimer = null;
 let cloudSaveInFlight = false;
 let cloudSaveQueued = false;
 let lastSyncedSnapshot = "";
+/** @type {{ column: string, direction: "asc" | "desc" }} */
+let membersSort = { column: "pseudo", direction: "asc" };
+
+const STATUS_SORT_ORDER = {
+  Vacances: 0,
+  Warning: 1,
+  "Pas payé": 2,
+  "En cours": 3,
+  Payé: 4,
+};
 
 function supabaseHeaders(extra = {}) {
   return {
@@ -118,10 +128,75 @@ function getActiveMembers() {
   return state.members.filter(isMemberActive);
 }
 
-function getMembersSortedByPseudo() {
-  return [...state.members].sort((a, b) =>
-    formatPseudo(a.pseudo).localeCompare(formatPseudo(b.pseudo), "fr", { sensitivity: "base" })
-  );
+function getMemberSortValue(member, column, week) {
+  const inactive = !isMemberActive(member);
+  switch (column) {
+    case "nom":
+      return formatPersonName(member.nom);
+    case "prenom":
+      return formatPersonName(member.prenom);
+    case "pseudo":
+      return formatPseudo(member.pseudo);
+    case "vip":
+      return member.vip === "Oui" ? 1 : 0;
+    case "paye":
+      return getPayment(member.id, week);
+    case "reste":
+      return inactive ? -1 : Math.max(0, WEEKLY_TARGET_PER_MEMBER - getPayment(member.id, week));
+    case "statut": {
+      if (inactive) return STATUS_SORT_ORDER.Vacances;
+      const status = getStatusForPayment(getPayment(member.id, week), week);
+      return STATUS_SORT_ORDER[status.label] ?? 0;
+    }
+    case "bonus": {
+      if (inactive) return -1;
+      const montant = getPayment(member.id, week);
+      return Math.max(0, montant - WEEKLY_TARGET_PER_MEMBER);
+    }
+    default:
+      return "";
+  }
+}
+
+function compareMembers(a, b, column, week) {
+  const va = getMemberSortValue(a, column, week);
+  const vb = getMemberSortValue(b, column, week);
+  let cmp = 0;
+  if (typeof va === "number" && typeof vb === "number") {
+    cmp = va - vb;
+  } else {
+    cmp = String(va).localeCompare(String(vb), "fr", { sensitivity: "base", numeric: true });
+  }
+  return membersSort.direction === "asc" ? cmp : -cmp;
+}
+
+function getMembersForTable() {
+  const week = state.selectedWeek;
+  return [...state.members].sort((a, b) => compareMembers(a, b, membersSort.column, week));
+}
+
+function setMembersSort(column) {
+  if (membersSort.column === column) {
+    membersSort.direction = membersSort.direction === "asc" ? "desc" : "asc";
+  } else {
+    membersSort.column = column;
+    membersSort.direction = ["paye", "reste", "bonus", "vip"].includes(column) ? "desc" : "asc";
+  }
+  updateSortHeaders();
+  renderMainTable();
+}
+
+function updateSortHeaders() {
+  const thead = document.querySelector(".table--members thead");
+  if (!thead) return;
+  thead.querySelectorAll("[data-sort]").forEach((btn) => {
+    const col = btn.dataset.sort;
+    const active = col === membersSort.column;
+    btn.classList.toggle("sort-active", active);
+    btn.setAttribute("aria-sort", active ? (membersSort.direction === "asc" ? "ascending" : "descending") : "none");
+    const icon = btn.querySelector(".sort-icon");
+    if (icon) icon.textContent = active ? (membersSort.direction === "asc" ? "↑" : "↓") : "";
+  });
 }
 
 function normalizeMembers(members) {
@@ -319,7 +394,7 @@ function renderMainTable() {
   membreTableBody.innerHTML = "";
   const week = state.selectedWeek;
 
-  for (const m of getMembersSortedByPseudo()) {
+  for (const m of getMembersForTable()) {
     const inactive = !isMemberActive(m);
     const montant = getPayment(m.id, week);
     const restant = Math.max(0, WEEKLY_TARGET_PER_MEMBER - montant);
@@ -345,7 +420,7 @@ function renderMainTable() {
       <td class="${status.className}">${status.label}</td>
       <td class="${bonus > 0 && !inactive ? "bonus-positive" : "bonus-none"}">${bonus > 0 && !inactive ? `+ ${formatNombre(bonus)}` : "-"}</td>
       <td class="hidden-admin">
-        <motion class="admin-actions">
+        <div class="admin-actions">
           <button type="button" class="small-btn ${toggleClass}" data-action="toggle-active" data-id="${m.id}">${toggleLabel}</button>
           <button type="button" class="small-btn" data-action="edit-payment" data-id="${m.id}" ${inactive ? "disabled" : ""}>Montant</button>
           <button type="button" class="small-btn" data-action="edit-member" data-id="${m.id}">Membre</button>
@@ -355,6 +430,7 @@ function renderMainTable() {
     `;
     membreTableBody.appendChild(tr);
   }
+  updateSortHeaders();
 }
 
 function renderStats() {
@@ -716,10 +792,22 @@ function assertConfigReady() {
   );
 }
 
+function initMembersTableSort() {
+  const thead = document.querySelector(".table--members thead");
+  if (!thead || thead.dataset.sortReady) return;
+  thead.dataset.sortReady = "1";
+  thead.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-sort]");
+    if (!btn) return;
+    setMembersSort(btn.dataset.sort);
+  });
+}
+
 async function initApp() {
   assertConfigReady();
   await load();
   loadLogoWithFallbacks();
+  initMembersTableSort();
   refreshAll();
   setActiveTab(activeTab);
   startCloudPolling();
