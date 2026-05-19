@@ -1,6 +1,6 @@
 const STORAGE_KEY = "triade-registre-hebdo-v2";
 const WEEKLY_TARGET_PER_MEMBER = 70000;
-const ASSET_VERSION = "20260519a";
+const ASSET_VERSION = "20260519b";
 const cfg = window.TRIADE_CONFIG || {};
 const SUPABASE_URL = String(cfg.supabaseUrl || "").trim();
 const SUPABASE_ANON_KEY = String(cfg.supabaseAnonKey || "").trim();
