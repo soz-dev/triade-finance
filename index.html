@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260519b" />
+    <link rel="stylesheet" href="./styles.css?v=20260519c" />
   </head>
   <body>
     <main class="container">
@@ -23,7 +23,7 @@
           class="hero-logo"
           onerror="this.style.display='none'; document.querySelector('.hero-fallback').style.display='grid';"
         />
-        <div class="hero-fallback" aria-hidden="true">
+        <motion class="hero-fallback" aria-hidden="true">
           <span>14K</span>
         </div>
         <h1>Triade 14K Finance</h1>
@@ -45,7 +45,7 @@
       <section id="tab-accueil" class="panel tab-page active" data-tab-page="accueil">
         <h2>Bienvenue</h2>
         <p>Consulte et gère les cotisations depuis l'onglet <strong>Cotisations</strong>.</p>
-        <div class="welcome-grid">
+        <motion class="welcome-grid">
           <article class="welcome-card">
             <h3>Mode lecture</h3>
             <p>Statistiques, suivi des membres et historique.</p>
@@ -55,8 +55,8 @@
             <p>Ajout membre, cotisations et gestion des lignes.</p>
           </article>
           <article class="welcome-card">
-            <h3>Membres inactifs</h3>
-            <p>Désactive une ligne sans perdre l'historique. Réactive quand tu veux.</p>
+            <h3>Mode vacances</h3>
+            <p>Met un membre en vacances sans perdre l'historique. Retour quand il revient.</p>
           </article>
         </div>
       </section>
@@ -149,9 +149,8 @@
           <div class="table-header">
             <h2>Membres — <span id="weekLabel"></span></h2>
           </div>
-          <p class="table-scroll-hint">Faire défiler horizontalement →</p>
-          <div class="table-wrap table-wrap--members">
-            <table class="table--members">
+          <div class="table-wrap">
+            <table>
               <thead>
                 <tr>
                   <th>Nom</th>
@@ -227,6 +226,6 @@
     </main>
 
     <script src="./config.js"></script>
-    <script src="./app.js?v=20260519b"></script>
+    <script src="./app.js?v=20260519c"></script>
   </body>
 </html>

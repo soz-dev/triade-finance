@@ -1,6 +1,6 @@
 const STORAGE_KEY = "triade-registre-hebdo-v2";
 const WEEKLY_TARGET_PER_MEMBER = 70000;
-const ASSET_VERSION = "20260519b";
+const ASSET_VERSION = "20260519c";
 const cfg = window.TRIADE_CONFIG || {};
 const SUPABASE_URL = String(cfg.supabaseUrl || "").trim();
 const SUPABASE_ANON_KEY = String(cfg.supabaseAnonKey || "").trim();
@@ -325,9 +325,9 @@ function renderMainTable() {
     const restant = Math.max(0, WEEKLY_TARGET_PER_MEMBER - montant);
     const bonus = Math.max(0, montant - WEEKLY_TARGET_PER_MEMBER);
     const status = inactive
-      ? { label: "Désactivé", className: "status-unpaid" }
+      ? { label: "Vacances", className: "status-vacances" }
       : getStatusForPayment(montant, week);
-    const toggleLabel = inactive ? "Réactiver" : "Désactiver";
+    const toggleLabel = inactive ? "Retour" : "Vacances";
     const toggleClass = inactive ? "ok-btn" : "warn-btn";
     const nom = formatPersonName(m.nom);
     const prenom = formatPersonName(m.prenom);
@@ -345,7 +345,7 @@ function renderMainTable() {
       <td class="${status.className}">${status.label}</td>
       <td class="${bonus > 0 && !inactive ? "bonus-positive" : "bonus-none"}">${bonus > 0 && !inactive ? `+ ${formatNombre(bonus)}` : "-"}</td>
       <td class="hidden-admin">
-        <div class="admin-actions">
+        <motion class="admin-actions">
           <button type="button" class="small-btn ${toggleClass}" data-action="toggle-active" data-id="${m.id}">${toggleLabel}</button>
           <button type="button" class="small-btn" data-action="edit-payment" data-id="${m.id}" ${inactive ? "disabled" : ""}>Montant</button>
           <button type="button" class="small-btn" data-action="edit-member" data-id="${m.id}">Membre</button>

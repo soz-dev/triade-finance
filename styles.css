@@ -529,6 +529,12 @@ tbody tr:hover:not(.row-inactive) {
   white-space: nowrap;
 }
 
+.status-vacances {
+  color: var(--text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 .status-warning {
   color: var(--warn);
   font-weight: 500;
