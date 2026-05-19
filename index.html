@@ -3,235 +3,229 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Triade - Registre Hebdomadaire</title>
+    <title>Triade 14K Finance</title>
     <meta
       name="description"
-      content="Registre de cotisations Triade: 70k par personne, par semaine, avec historique."
+      content="Registre de cotisations Triade 14K : 70k par personne, par semaine."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260507g" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css?v=20260519a" />
   </head>
   <body>
-    <div class="bg-overlay"></div>
     <main class="container">
       <header class="hero">
         <img
           id="heroLogo"
-          src="./assets/dragon.png?v=20260507g"
-          alt="Logo Triade Dragon"
+          src="./assets/dragon.png?v=20260519a"
+          alt="Logo Triade"
           class="hero-logo"
           onerror="this.style.display='none'; document.querySelector('.hero-fallback').style.display='grid';"
         />
         <div class="hero-fallback" aria-hidden="true">
-          <span>TRIADE</span>
-          <small>DRAGON</small>
+          <span>14K</span>
         </div>
-        <h1>Triade</h1>
+        <h1>Triade 14K Finance</h1>
         <p class="hero-subtitle">Registre hebdomadaire des cotisations</p>
-        <p>Règle: <strong>70 000</strong> par personne, par semaine</p>
+        <p>70 000 par personne, par semaine</p>
       </header>
 
       <section class="panel tabs-panel">
         <div class="tabs-nav" role="tablist" aria-label="Navigation principale">
           <button type="button" class="tab-btn active" data-tab="accueil" role="tab" aria-selected="true" aria-controls="tab-accueil">
-            <span class="tab-icon" aria-hidden="true">⚙️</span>
-            <span>Accueil</span>
+            Accueil
           </button>
           <button type="button" class="tab-btn" data-tab="cotiz-famille" role="tab" aria-selected="false" aria-controls="tab-cotiz-famille">
-            <span class="tab-icon" aria-hidden="true">👥</span>
-            <span>Cotiz Famille</span>
+            Cotisations
           </button>
         </div>
       </section>
 
       <section id="tab-accueil" class="panel tab-page active" data-tab-page="accueil">
         <h2>Bienvenue</h2>
-        <p>Utilise l'onglet <strong>Cotiz famille</strong> pour consulter et gérer les cotisations hebdomadaires.</p>
+        <p>Consulte et gère les cotisations depuis l'onglet <strong>Cotisations</strong>.</p>
         <div class="welcome-grid">
           <article class="welcome-card">
             <h3>Mode lecture</h3>
-            <p>Consultation uniquement: statistiques, suivi des membres et historique.</p>
+            <p>Statistiques, suivi des membres et historique.</p>
           </article>
           <article class="welcome-card">
             <h3>Mode admin</h3>
-            <p>Gestion complète: ajout membre, enregistrement cotisation et actions de modification.</p>
+            <p>Ajout membre, cotisations et gestion des lignes.</p>
           </article>
           <article class="welcome-card">
-            <h3>Navigation rapide</h3>
-            <p>Accède à la gestion de la famille depuis l'onglet dédié en haut de page.</p>
+            <h3>Membres inactifs</h3>
+            <p>Désactive une ligne sans perdre l'historique. Réactive quand tu veux.</p>
           </article>
         </div>
       </section>
 
       <section id="tab-cotiz-famille" class="tab-page" data-tab-page="cotiz-famille" hidden>
         <section class="panel family-header">
-          <h2>💰 COTIZ FAMILLE</h2>
+          <h2>Cotisations famille</h2>
         </section>
 
         <section class="panel admin-panel">
-        <div class="admin-heading">
-          <h2>Commandes Admin</h2>
-        </div>
-        <form id="adminForm" class="admin-form">
-          <input type="password" name="adminCode" placeholder="Code admin" autocomplete="off" required />
-          <button type="submit">Activer</button>
-          <button type="button" id="adminOffBtn" class="ghost">Quitter admin</button>
-        </form>
-        <p id="adminStatus" class="status-pill">Mode lecture</p>
-      </section>
+          <h2>Administration</h2>
+          <form id="adminForm" class="admin-form">
+            <input type="password" name="adminCode" placeholder="Code admin" autocomplete="off" required />
+            <button type="submit">Activer</button>
+            <button type="button" id="adminOffBtn" class="ghost">Quitter</button>
+          </form>
+          <p id="adminStatus" class="status-pill">Mode lecture</p>
+        </section>
 
-      <section class="stats-grid">
-        <article class="panel stat">
-          <h3>Total semaine</h3>
-          <p><span id="weeklyTotal">0</span></p>
-        </article>
-        <article class="panel stat">
-          <h3>Objectif semaine</h3>
-          <p><span id="weeklyTarget">0</span></p>
-        </article>
-        <article class="panel stat">
-          <h3>Retardataires</h3>
-          <p><span id="lateCount">0</span></p>
-        </article>
-      </section>
+        <section class="stats-grid">
+          <article class="panel stat">
+            <h3>Total semaine</h3>
+            <p><span id="weeklyTotal">0</span></p>
+          </article>
+          <article class="panel stat">
+            <h3>Objectif semaine</h3>
+            <p><span id="weeklyTarget">0</span></p>
+          </article>
+          <article class="panel stat">
+            <h3>Retardataires</h3>
+            <p><span id="lateCount">0</span></p>
+          </article>
+        </section>
 
-      <section class="panel progress-panel">
-        <h2>⚡ Progression donation</h2>
-        <p class="progress-meta">
-          <span>Total: <strong id="progressTotal">0</strong></span>
-          <span>Objectif: <strong id="progressTarget">0</strong></span>
-          <span>Taux: <strong id="progressPercent">0%</strong></span>
-        </p>
-        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Progression cotisations">
-          <div id="progressFill" class="progress-fill"></div>
-        </div>
-        <div class="progress-steps">
-          <span id="stepLow" class="step-dot">Bas</span>
-          <span id="stepMid" class="step-dot">Moyen</span>
-          <span id="stepHigh" class="step-dot">Complet</span>
-        </div>
-        <p id="progressStatus" class="progress-status">Niveau faible</p>
-      </section>
-
-      <section class="panel admin-only-section">
-        <h2>Ajouter un membre</h2>
-        <form id="membreForm">
-          <div class="field-grid">
-            <label>Nom <input name="nom" type="text" required /></label>
-            <label>Prénom <input name="prenom" type="text" required /></label>
-            <label>Pseudo <input name="pseudo" type="text" required /></label>
-            <label>
-              VIP
-              <select name="vip" required>
-                <option value="Non">Non</option>
-                <option value="Oui">Oui</option>
-              </select>
-            </label>
+        <section class="panel progress-panel">
+          <h2>Progression</h2>
+          <p class="progress-meta">
+            <span>Total <strong id="progressTotal">0</strong></span>
+            <span>Objectif <strong id="progressTarget">0</strong></span>
+            <span><strong id="progressPercent">0%</strong></span>
+          </p>
+          <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Progression cotisations">
+            <div id="progressFill" class="progress-fill"></div>
           </div>
-          <button type="submit">Ajouter membre</button>
-        </form>
-      </section>
-
-      <section class="panel admin-only-section">
-        <h2>Enregistrer une cotisation (semaine en cours)</h2>
-        <form id="cotisationForm">
-          <div class="field-grid cotis-grid">
-            <label>
-              Membre
-              <select id="memberSelect" name="memberId" required></select>
-            </label>
-            <label>
-              Montant
-              <input name="montant" type="number" min="0" step="any" required />
-            </label>
+          <div class="progress-steps">
+            <span id="stepLow" class="step-dot">Bas</span>
+            <span id="stepMid" class="step-dot">Moyen</span>
+            <span id="stepHigh" class="step-dot">Complet</span>
           </div>
-          <button type="submit">Enregistrer cotisation</button>
-        </form>
-      </section>
+          <p id="progressStatus" class="progress-status">Niveau faible</p>
+        </section>
 
-      <section class="panel">
-        <div class="table-header section-title">
-          <h2>Membres (<span id="weekLabel"></span>)</h2>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Nom</th>
-                <th>Prénom</th>
-                <th>Pseudo</th>
-                <th>VIP</th>
-                <th>Montant payé</th>
-                <th>Reste</th>
-                <th>Statut</th>
-                <th>Bonus +</th>
-                <th class="hidden-admin">Admin</th>
-              </tr>
-            </thead>
-            <tbody id="membreTableBody"></tbody>
-          </table>
-        </div>
-      </section>
+        <section class="panel admin-only-section">
+          <h2>Ajouter un membre</h2>
+          <form id="membreForm">
+            <div class="field-grid">
+              <label>Nom <input name="nom" type="text" required /></label>
+              <label>Prénom <input name="prenom" type="text" required /></label>
+              <label>Pseudo <input name="pseudo" type="text" required /></label>
+              <label>
+                VIP
+                <select name="vip" required>
+                  <option value="Non">Non</option>
+                  <option value="Oui">Oui</option>
+                </select>
+              </label>
+            </div>
+            <button type="submit">Ajouter</button>
+          </form>
+        </section>
 
-      <section class="panel">
-        <h2 class="section-title-text">🕘 Historique des semaines</h2>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Semaine</th>
-                <th>Total collecté</th>
-                <th>Objectif</th>
-                <th>Progression</th>
-                <th>Payés / en cours (payé + reste)</th>
-                <th>Pas payés</th>
-              </tr>
-            </thead>
-            <tbody id="historyTableBody"></tbody>
-          </table>
-        </div>
-      </section>
+        <section class="panel admin-only-section">
+          <h2>Enregistrer une cotisation</h2>
+          <form id="cotisationForm">
+            <div class="field-grid cotis-grid">
+              <label>
+                Membre
+                <select id="memberSelect" name="memberId" required></select>
+              </label>
+              <label>
+                Montant
+                <input name="montant" type="number" min="0" step="any" required />
+              </label>
+            </div>
+            <button type="submit">Enregistrer</button>
+          </form>
+        </section>
 
-      <section class="panel">
-        <h2 class="section-title-text">🏆 Top 10 Bonus</h2>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Rang</th>
-                <th>Pseudo</th>
-                <th>Bonus cumulé</th>
-                <th>Semaines avec bonus</th>
-              </tr>
-            </thead>
-            <tbody id="topBonusBody"></tbody>
-          </table>
-        </div>
-      </section>
+        <section class="panel">
+          <div class="table-header">
+            <h2>Membres — <span id="weekLabel"></span></h2>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nom</th>
+                  <th>Prénom</th>
+                  <th>Pseudo</th>
+                  <th>VIP</th>
+                  <th>Payé</th>
+                  <th>Reste</th>
+                  <th>Statut</th>
+                  <th>Bonus</th>
+                  <th class="hidden-admin">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="membreTableBody"></tbody>
+            </table>
+          </div>
+        </section>
 
-      <section class="panel">
-        <h2 class="section-title-text">🚨 Mauvais payeurs</h2>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Rang</th>
-                <th>Pseudo</th>
-                <th>Semaines impayées</th>
-                <th>Dette totale</th>
-                <th>Statut semaine en cours</th>
-              </tr>
-            </thead>
-            <tbody id="badPayersBody"></tbody>
-          </table>
-        </div>
-      </section>
+        <section class="panel">
+          <h2 class="section-title-text">Historique des semaines</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Semaine</th>
+                  <th>Total</th>
+                  <th>Objectif</th>
+                  <th>%</th>
+                  <th>Payés / en cours</th>
+                  <th>Impayés</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2 class="section-title-text">Top 10 bonus</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Pseudo</th>
+                  <th>Bonus cumulé</th>
+                  <th>Semaines</th>
+                </tr>
+              </thead>
+              <tbody id="topBonusBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2 class="section-title-text">Retards</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Pseudo</th>
+                  <th>Sem. impayées</th>
+                  <th>Dette</th>
+                  <th>Semaine en cours</th>
+                </tr>
+              </thead>
+              <tbody id="badPayersBody"></tbody>
+            </table>
+          </div>
+        </section>
       </section>
     </main>
 
     <script src="./config.js"></script>
-    <script src="./app.js?v=20260507h"></script>
+    <script src="./app.js?v=20260519a"></script>
   </body>
 </html>

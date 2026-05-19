@@ -1,6 +1,6 @@
 const STORAGE_KEY = "triade-registre-hebdo-v2";
 const WEEKLY_TARGET_PER_MEMBER = 70000;
-const ASSET_VERSION = "20260507h";
+const ASSET_VERSION = "20260519a";
 const cfg = window.TRIADE_CONFIG || {};
 const SUPABASE_URL = String(cfg.supabaseUrl || "").trim();
 const SUPABASE_ANON_KEY = String(cfg.supabaseAnonKey || "").trim();
@@ -33,7 +33,7 @@ const tabButtons = document.querySelectorAll(".tab-btn");
 const tabPages = document.querySelectorAll("[data-tab-page]");
 
 /**
- * @typedef {{id:string,nom:string,prenom:string,pseudo:string,vip:"Oui"|"Non"}} Member
+ * @typedef {{id:string,nom:string,prenom:string,pseudo:string,vip:"Oui"|"Non",active?:boolean}} Member
  * @typedef {{members: Member[], payments: Record<string, Record<string, number>>, selectedWeek: string}} State
  */
 
@@ -110,10 +110,31 @@ function save() {
   queueCloudSave();
 }
 
+function isMemberActive(member) {
+  return member.active !== false;
+}
+
+function getActiveMembers() {
+  return state.members.filter(isMemberActive);
+}
+
+function getMembersSortedByPseudo() {
+  return [...state.members].sort((a, b) =>
+    formatPseudo(a.pseudo).localeCompare(formatPseudo(b.pseudo), "fr", { sensitivity: "base" })
+  );
+}
+
+function normalizeMembers(members) {
+  return members.map((m) => ({
+    ...m,
+    active: m.active !== false,
+  }));
+}
+
 function applyLoadedState(raw) {
   if (!raw || typeof raw !== "object") return;
   if (Array.isArray(raw.members)) {
-    state.members = raw.members;
+    state.members = normalizeMembers(raw.members);
   }
   if (raw.payments && typeof raw.payments === "object") {
     state.payments = raw.payments;
@@ -275,15 +296,18 @@ function getStatusForPayment(amount, week) {
 
 function renderMemberSelect() {
   memberSelect.innerHTML = "";
-  if (!state.members.length) {
+  const active = getActiveMembers();
+  if (!active.length) {
     const option = document.createElement("option");
     option.value = "";
-    option.textContent = "Aucun membre";
+    option.textContent = "Aucun membre actif";
     memberSelect.appendChild(option);
     return;
   }
 
-  for (const m of state.members) {
+  for (const m of active.sort((a, b) =>
+    formatPseudo(a.pseudo).localeCompare(formatPseudo(b.pseudo), "fr", { sensitivity: "base" })
+  )) {
     const option = document.createElement("option");
     option.value = m.id;
     option.textContent = `${m.pseudo} (${m.nom} ${m.prenom})`;
@@ -295,28 +319,35 @@ function renderMainTable() {
   membreTableBody.innerHTML = "";
   const week = state.selectedWeek;
 
-  for (const m of state.members) {
+  for (const m of getMembersSortedByPseudo()) {
+    const inactive = !isMemberActive(m);
     const montant = getPayment(m.id, week);
     const restant = Math.max(0, WEEKLY_TARGET_PER_MEMBER - montant);
     const bonus = Math.max(0, montant - WEEKLY_TARGET_PER_MEMBER);
-    const status = getStatusForPayment(montant, week);
+    const status = inactive
+      ? { label: "Désactivé", className: "status-unpaid" }
+      : getStatusForPayment(montant, week);
+    const toggleLabel = inactive ? "Réactiver" : "Désactiver";
+    const toggleClass = inactive ? "ok-btn" : "warn-btn";
     const nom = formatPersonName(m.nom);
     const prenom = formatPersonName(m.prenom);
     const pseudo = formatPseudo(m.pseudo);
 
     const tr = document.createElement("tr");
+    if (inactive) tr.classList.add("row-inactive");
     tr.innerHTML = `
       <td>${nom}</td>
       <td>${prenom}</td>
       <td>${pseudo}</td>
       <td class="${m.vip === "Oui" ? "vip-oui" : "vip-non"}">${m.vip}</td>
       <td>${formatNombre(montant)}</td>
-      <td>${formatNombre(restant)}</td>
+      <td>${inactive ? "—" : formatNombre(restant)}</td>
       <td class="${status.className}">${status.label}</td>
-      <td class="${bonus > 0 ? "bonus-positive" : "bonus-none"}">${bonus > 0 ? `+ ${formatNombre(bonus)}` : "-"}</td>
+      <td class="${bonus > 0 && !inactive ? "bonus-positive" : "bonus-none"}">${bonus > 0 && !inactive ? `+ ${formatNombre(bonus)}` : "-"}</td>
       <td class="hidden-admin">
         <div class="admin-actions">
-          <button type="button" class="small-btn" data-action="edit-payment" data-id="${m.id}">Montant</button>
+          <button type="button" class="small-btn ${toggleClass}" data-action="toggle-active" data-id="${m.id}">${toggleLabel}</button>
+          <button type="button" class="small-btn" data-action="edit-payment" data-id="${m.id}" ${inactive ? "disabled" : ""}>Montant</button>
           <button type="button" class="small-btn" data-action="edit-member" data-id="${m.id}">Membre</button>
           <button type="button" class="small-btn danger" data-action="delete-member" data-id="${m.id}">Suppr</button>
         </div>
@@ -328,9 +359,10 @@ function renderMainTable() {
 
 function renderStats() {
   const week = state.selectedWeek;
-  const total = state.members.reduce((sum, m) => sum + getPayment(m.id, week), 0);
-  const target = state.members.length * WEEKLY_TARGET_PER_MEMBER;
-  const late = state.members.filter((m) => getPayment(m.id, week) < WEEKLY_TARGET_PER_MEMBER).length;
+  const active = getActiveMembers();
+  const total = active.reduce((sum, m) => sum + getPayment(m.id, week), 0);
+  const target = active.length * WEEKLY_TARGET_PER_MEMBER;
+  const late = active.filter((m) => getPayment(m.id, week) < WEEKLY_TARGET_PER_MEMBER).length;
 
   weeklyTotalEl.textContent = formatNombre(total);
   weeklyTargetEl.textContent = formatNombre(target);
@@ -369,10 +401,11 @@ function renderStats() {
 function renderHistory() {
   historyTableBody.innerHTML = "";
   for (const week of allWeeks()) {
-    const total = state.members.reduce((sum, m) => sum + getPayment(m.id, week), 0);
-    const target = state.members.length * WEEKLY_TARGET_PER_MEMBER;
+    const active = getActiveMembers();
+    const total = active.reduce((sum, m) => sum + getPayment(m.id, week), 0);
+    const target = active.length * WEEKLY_TARGET_PER_MEMBER;
     const pct = target > 0 ? ((total / target) * 100).toFixed(1) : "0.0";
-    const paidOrStartedEntries = state.members
+    const paidOrStartedEntries = active
       .map((m) => ({ pseudo: formatPseudo(m.pseudo), amount: getPayment(m.id, week) }))
       .filter((entry) => entry.amount > 0)
       .map((entry) => {
@@ -382,7 +415,7 @@ function renderHistory() {
         }
         return `${escapeHtml(entry.pseudo)}: payé ${formatNombre(entry.amount)} / reste 0`;
       });
-    const unpaidEntries = state.members
+    const unpaidEntries = active
       .map((m) => ({ pseudo: formatPseudo(m.pseudo), amount: getPayment(m.id, week) }))
       .filter((entry) => entry.amount <= 0)
       .map((entry) => escapeHtml(entry.pseudo));
@@ -416,7 +449,7 @@ function renderHistory() {
 function renderTopBonus() {
   topBonusBody.innerHTML = "";
   const weeks = allWeeks();
-  const ranking = state.members.map((m) => {
+  const ranking = getActiveMembers().map((m) => {
     let bonusTotal = 0;
     let bonusWeeks = 0;
     for (const week of weeks) {
@@ -460,7 +493,7 @@ function renderBadPayers() {
   badPayersBody.innerHTML = "";
   const weeks = allWeeks();
   const nowWeek = currentWeek();
-  const ranking = state.members
+  const ranking = getActiveMembers()
     .map((m) => {
       let unpaidWeeks = 0;
       let debt = 0;
@@ -578,7 +611,7 @@ membreForm.addEventListener("submit", (event) => {
   const vip = String(formData.get("vip") || "Non") === "Oui" ? "Oui" : "Non";
   if (!nom || !prenom || !pseudo) return;
 
-  state.members.push({ id: crypto.randomUUID(), nom, prenom, pseudo, vip });
+  state.members.push({ id: crypto.randomUUID(), nom, prenom, pseudo, vip, active: true });
   membreForm.reset();
   save();
   refreshAll();
@@ -637,7 +670,12 @@ membreTableBody.addEventListener("click", (event) => {
   const member = state.members.find((m) => m.id === id);
   if (!member) return;
 
+  if (action === "toggle-active") {
+    member.active = !isMemberActive(member);
+  }
+
   if (action === "edit-payment") {
+    if (!isMemberActive(member)) return;
     const currentAmount = getPayment(id, state.selectedWeek);
     const next = prompt(`Montant semaine ${state.selectedWeek}`, String(currentAmount));
     if (next === null) return;
